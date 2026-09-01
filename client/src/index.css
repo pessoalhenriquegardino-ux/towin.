@@ -151,12 +151,12 @@ body::before {
 .app-nav-icon { font-size: 16px; }
 
 @media (min-width: 900px) {
-  .app-shell { flex-direction: row; }
-
+  /* Barra lateral fixa de verdade (não sticky) — evita o engasgo de scroll que
+     `position: sticky` + blur costuma causar em alguns navegadores. */
   .app-nav {
-    order: 0;
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
     bottom: auto;
     height: 100dvh;
     width: 232px;
@@ -168,6 +168,9 @@ body::before {
     padding: 28px 16px;
     border-right: 1px solid var(--border);
     border-top: none;
+  }
+  .app-main {
+    margin-left: 232px;
   }
   .app-nav-logo {
     display: block;
