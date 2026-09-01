@@ -20,6 +20,9 @@ export default function GoalCard({ meta, onAtualizarProgresso, onConcluir }) {
   const valorAtual = meta.valor_atual || 0;
   const valorFalta = temValor ? Math.max(0, meta.valor_alvo - valorAtual) : null;
   const progressoValor = temValor ? Math.min(100, Math.round((valorAtual / meta.valor_alvo) * 100)) : null;
+  const fotoPosX = meta.foto_pos_x ?? 50;
+  const fotoPosY = meta.foto_pos_y ?? 50;
+  const fotoZoom = meta.foto_zoom ?? 100;
 
   return (
     <div
@@ -43,6 +46,9 @@ export default function GoalCard({ meta, onAtualizarProgresso, onConcluir }) {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
+              objectPosition: `${fotoPosX}% ${fotoPosY}%`,
+              transform: `scale(${fotoZoom / 100})`,
+              transformOrigin: `${fotoPosX}% ${fotoPosY}%`,
             }}
           />
           <div

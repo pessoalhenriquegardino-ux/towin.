@@ -109,5 +109,8 @@ function garantirColuna(tabela, coluna, definicao) {
 
 garantirColuna('metas', 'valor_alvo', 'REAL');
 garantirColuna('metas', 'valor_atual', 'REAL');
+garantirColuna('metas', 'foto_pos_x', 'REAL DEFAULT 50');
+garantirColuna('metas', 'foto_pos_y', 'REAL DEFAULT 50');
+garantirColuna('metas', 'foto_zoom', 'REAL DEFAULT 100');
 
 export default db;

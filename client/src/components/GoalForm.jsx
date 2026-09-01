@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
+import PhotoPositioner from './PhotoPositioner.jsx';
 
 const CATEGORIAS = ['carreira', 'saúde', 'fé', 'família', 'financeiro', 'pessoal', 'outro'];
 
@@ -25,6 +26,9 @@ export default function GoalForm() {
   const [porque, setPorque] = useState('');
   const [categoria, setCategoria] = useState('pessoal');
   const [fotoUrl, setFotoUrl] = useState('');
+  const [fotoPosX, setFotoPosX] = useState(50);
+  const [fotoPosY, setFotoPosY] = useState(50);
+  const [fotoZoom, setFotoZoom] = useState(100);
   const [valorAlvo, setValorAlvo] = useState('');
   const [valorAtual, setValorAtual] = useState('');
   const [erro, setErro] = useState('');
@@ -39,6 +43,9 @@ export default function GoalForm() {
         setPorque(m.porque);
         setCategoria(m.categoria || 'pessoal');
         setFotoUrl(m.foto_url || '');
+        setFotoPosX(m.foto_pos_x ?? 50);
+        setFotoPosY(m.foto_pos_y ?? 50);
+        setFotoZoom(m.foto_zoom ?? 100);
         setValorAlvo(m.valor_alvo || '');
         setValorAtual(m.valor_atual || '');
       });
@@ -50,6 +57,9 @@ export default function GoalForm() {
     if (!file) return;
     const base64 = await arquivoParaBase64(file);
     setFotoUrl(base64);
+    setFotoPosX(50);
+    setFotoPosY(50);
+    setFotoZoom(100);
   }
 
   async function handleSubmit(e) {
@@ -68,6 +78,9 @@ export default function GoalForm() {
         porque,
         categoria,
         foto_url: fotoUrl || null,
+        foto_pos_x: fotoPosX,
+        foto_pos_y: fotoPosY,
+        foto_zoom: fotoZoom,
         valor_alvo: valorAlvo ? parseFloat(valorAlvo) : null,
         valor_atual: valorAtual ? parseFloat(valorAtual) : null,
       };
@@ -94,42 +107,27 @@ export default function GoalForm() {
     <div className="page">
       <h1 className="page-title">{editando ? 'Editar meta' : 'Nova meta'}</h1>
 
-      {/* Preview em hero — igual como a meta vai aparecer no painel */}
-      <div
-        onClick={() => fileRef.current?.click()}
-        className="panel"
-        style={{
-          position: 'relative',
-          borderRadius: 'var(--radius-lg)',
-          overflow: 'hidden',
-          height: 190,
-          marginBottom: 22,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'flex-end',
-        }}
-      >
-        {fotoUrl ? (
-          <>
-            <img src={fotoUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.75))' }} />
-          </>
-        ) : (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 13, textAlign: 'center', padding: 20 }}>
-            Toque para adicionar a foto da sua meta<br />(ex: a Porsche que você quer)
+      <div style={{ marginBottom: 22 }}>
+        <PhotoPositioner
+          fotoUrl={fotoUrl}
+          posX={fotoPosX}
+          posY={fotoPosY}
+          zoom={fotoZoom}
+          onChangePos={(x, y) => { setFotoPosX(x); setFotoPosY(y); }}
+          onChangeZoom={setFotoZoom}
+          onTrocarFoto={() => fileRef.current?.click()}
+        />
+        <input ref={fileRef} type="file" accept="image/*" onChange={handleFoto} style={{ display: 'none' }} />
+        {(titulo || valorAlvo) && (
+          <div style={{ marginTop: 10, fontSize: 13, color: 'var(--text-dim)' }}>
+            <strong style={{ color: 'var(--text)' }}>{titulo || 'Título da meta'}</strong>
+            {valorAlvo && (
+              <span style={{ fontFamily: 'var(--font-mono)', marginLeft: 8 }}>
+                · alvo: {parseFloat(valorAlvo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+              </span>
+            )}
           </div>
         )}
-        <div style={{ position: 'relative', padding: 18, width: '100%' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, textShadow: fotoUrl ? '0 2px 10px rgba(0,0,0,0.6)' : 'none' }}>
-            {titulo || 'Título da meta'}
-          </div>
-          {valorAlvo && (
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text)', marginTop: 4 }}>
-              alvo: {parseFloat(valorAlvo).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
-            </div>
-          )}
-        </div>
-        <input ref={fileRef} type="file" accept="image/*" onChange={handleFoto} style={{ display: 'none' }} />
       </div>
 
       <form onSubmit={handleSubmit}>
