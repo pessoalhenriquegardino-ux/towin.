@@ -41,7 +41,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="page" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 62px)', paddingBottom: 12 }}>
+    <div className="page" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - var(--nav-offset))', paddingBottom: 12 }}>
       <h1 className="page-title" style={{ marginBottom: 12 }}>Coach</h1>
 
       <div style={{ flex: 1, overflowY: 'auto', marginBottom: 12 }}>

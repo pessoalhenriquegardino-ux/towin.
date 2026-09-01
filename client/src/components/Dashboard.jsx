@@ -41,7 +41,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="page">
+    <div className="page page-wide">
       <div style={{ marginBottom: 4 }}>
         <img src="/logo-wordmark.png" alt="To Win" style={{ height: 22, width: 'auto', marginBottom: 10 }} />
         <h1 className="page-title" style={{ marginBottom: 8 }}>Seu caminho</h1>
@@ -71,9 +71,11 @@ export default function Dashboard() {
         {!carregando && metas.length === 0 && (
           <div className="empty-state">Nenhuma meta ativa. Toda mudança começa com uma decisão registrada.</div>
         )}
-        {metas.map((m) => (
-          <GoalCard key={m.id} meta={m} onAtualizarProgresso={atualizarProgresso} onConcluir={concluirMeta} />
-        ))}
+        <div className="cards-grid">
+          {metas.map((m) => (
+            <GoalCard key={m.id} meta={m} onAtualizarProgresso={atualizarProgresso} onConcluir={concluirMeta} />
+          ))}
+        </div>
       </section>
 
       <section>
@@ -86,9 +88,11 @@ export default function Dashboard() {
         {!carregando && vicios.length === 0 && (
           <div className="empty-state">Nada cadastrado aqui ainda. O primeiro passo é admitir o que precisa largar.</div>
         )}
-        {vicios.map((v) => (
-          <AddictionCard key={v.id} vicio={v} onRecaida={registrarRecaida} />
-        ))}
+        <div className="cards-grid">
+          {vicios.map((v) => (
+            <AddictionCard key={v.id} vicio={v} onRecaida={registrarRecaida} />
+          ))}
+        </div>
       </section>
     </div>
   );

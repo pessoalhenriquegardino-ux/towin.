@@ -10,19 +10,21 @@ import Pomodoro from './components/Pomodoro.jsx';
 
 export default function App() {
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/metas/nova" element={<GoalForm />} />
-        <Route path="/metas/:id/editar" element={<GoalForm />} />
-        <Route path="/vicios/novo" element={<AddictionForm />} />
-        <Route path="/vicios/:id/editar" element={<AddictionForm />} />
-        <Route path="/linha-do-tempo" element={<Timeline />} />
-        <Route path="/pomodoro" element={<Pomodoro />} />
-        <Route path="/coach" element={<Chat />} />
-        <Route path="/config" element={<Settings />} />
-      </Routes>
+    <div className="app-shell">
       <NavBar />
-    </>
+      <main className="app-main">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/metas/nova" element={<GoalForm />} />
+          <Route path="/metas/:id/editar" element={<GoalForm />} />
+          <Route path="/vicios/novo" element={<AddictionForm />} />
+          <Route path="/vicios/:id/editar" element={<AddictionForm />} />
+          <Route path="/linha-do-tempo" element={<Timeline />} />
+          <Route path="/pomodoro" element={<Pomodoro />} />
+          <Route path="/coach" element={<Chat />} />
+          <Route path="/config" element={<Settings />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
