@@ -95,6 +95,16 @@ CREATE TABLE IF NOT EXISTS pomodoro_sessoes (
   concluida_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS tarefas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  texto TEXT NOT NULL,
+  concluida INTEGER NOT NULL DEFAULT 0,
+  data TEXT NOT NULL,
+  ordem INTEGER NOT NULL DEFAULT 0,
+  data_criacao TEXT NOT NULL DEFAULT (datetime('now')),
+  concluida_em TEXT
+);
+
 INSERT OR IGNORE INTO configuracao (id) VALUES (1);
 `);
 

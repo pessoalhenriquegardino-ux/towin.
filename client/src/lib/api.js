@@ -59,4 +59,11 @@ export const api = {
   registrarSessaoPomodoro: (meta_id, duracao_min) =>
     req('/pomodoro', { method: 'POST', body: JSON.stringify({ meta_id, duracao_min }) }),
   obterResumoPomodoro: () => req('/pomodoro/resumo'),
+
+  // Tarefas
+  listarTarefas: (data) => req(`/tarefas${data ? `?data=${data}` : ''}`),
+  criarTarefa: (texto, data) => req('/tarefas', { method: 'POST', body: JSON.stringify({ texto, data }) }),
+  atualizarTarefa: (id, dados) => req(`/tarefas/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
+  excluirTarefa: (id) => req(`/tarefas/${id}`, { method: 'DELETE' }),
+  limparConcluidas: (data) => req(`/tarefas${data ? `?data=${data}` : ''}`, { method: 'DELETE' }),
 };

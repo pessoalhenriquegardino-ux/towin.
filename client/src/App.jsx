@@ -8,6 +8,7 @@ import Timeline from './components/Timeline.jsx';
 import Chat from './components/Chat.jsx';
 import Settings from './components/Settings.jsx';
 import Pomodoro from './components/Pomodoro.jsx';
+import Tasks from './components/Tasks.jsx';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/vicios/:id/editar" element={<AddictionForm />} />
           <Route path="/linha-do-tempo" element={<Timeline />} />
           <Route path="/pomodoro" element={<Pomodoro />} />
+          <Route path="/tarefas" element={<Tasks />} />
           <Route path="/coach" element={<Chat />} />
           <Route path="/config" element={<Settings />} />
         </Routes>

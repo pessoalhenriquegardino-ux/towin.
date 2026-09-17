@@ -18,6 +18,7 @@ import notificacoesRouter from './routes/notificacoes.js';
 import configuracaoRouter from './routes/configuracao.js';
 import dashboardRouter from './routes/dashboard.js';
 import pomodoroRouter from './routes/pomodoro.js';
+import tarefasRouter from './routes/tarefas.js';
 
 const app = express();
 app.use(cors());
@@ -32,6 +33,7 @@ app.use('/api/notificacoes', notificacoesRouter);
 app.use('/api/configuracao', configuracaoRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/pomodoro', pomodoroRouter);
+app.use('/api/tarefas', tarefasRouter);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
