@@ -164,7 +164,13 @@ export default function GoalCard({ meta, onAtualizarProgresso, onConcluir }) {
           <button className="btn btn-ghost" style={{ padding: '9px 16px' }} onClick={() => navigate(`/metas/${meta.id}/editar`)}>
             Editar
           </button>
-          <button className="btn btn-solid" style={{ padding: '9px 18px', marginLeft: 'auto' }} onClick={() => onConcluir(meta)}>
+          <button
+            className="btn btn-solid"
+            style={{ padding: '9px 18px', marginLeft: 'auto' }}
+            onClick={() => {
+              if (confirm(`Marcar "${meta.titulo}" como concluída?`)) onConcluir(meta);
+            }}
+          >
             Concluir
           </button>
         </div>

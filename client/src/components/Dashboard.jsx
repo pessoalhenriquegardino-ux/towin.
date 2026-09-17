@@ -7,14 +7,21 @@ import AddictionCard from './AddictionCard.jsx';
 export default function Dashboard() {
   const navigate = useNavigate();
   const [metas, setMetas] = useState([]);
+  const [metasConcluidas, setMetasConcluidas] = useState([]);
+  const [mostrarConcluidas, setMostrarConcluidas] = useState(false);
   const [vicios, setVicios] = useState([]);
   const [frase, setFrase] = useState('');
   const [carregando, setCarregando] = useState(true);
 
   async function carregar() {
     setCarregando(true);
-    const [m, v] = await Promise.all([api.listarMetas('ativa'), api.listarVicios('ativo')]);
+    const [m, mc, v] = await Promise.all([
+      api.listarMetas('ativa'),
+      api.listarMetas('concluida'),
+      api.listarVicios('ativo'),
+    ]);
     setMetas(m);
+    setMetasConcluidas(mc);
     setVicios(v);
     setCarregando(false);
     api.obterFraseDoDia().then((r) => setFrase(r.frase)).catch(() => {});
@@ -31,8 +38,15 @@ export default function Dashboard() {
   }
 
   async function concluirMeta(meta) {
-    await api.atualizarMeta(meta.id, { status: 'concluida', progresso: 100 });
+    const atualizada = await api.atualizarMeta(meta.id, { status: 'concluida', progresso: 100 });
     setMetas((prev) => prev.filter((m) => m.id !== meta.id));
+    setMetasConcluidas((prev) => [atualizada, ...prev]);
+  }
+
+  async function reabrirMeta(meta) {
+    const atualizada = await api.atualizarMeta(meta.id, { status: 'ativa' });
+    setMetasConcluidas((prev) => prev.filter((m) => m.id !== meta.id));
+    setMetas((prev) => [atualizada, ...prev]);
   }
 
   async function registrarRecaida(vicio, nota) {
@@ -77,6 +91,56 @@ export default function Dashboard() {
           ))}
         </div>
       </section>
+
+      {metasConcluidas.length > 0 && (
+        <section style={{ marginBottom: 30 }}>
+          <button
+            onClick={() => setMostrarConcluidas((v) => !v)}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginBottom: mostrarConcluidas ? 14 : 0,
+              cursor: 'pointer',
+            }}
+          >
+            <h2 style={{ fontSize: 12.5, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-dim)', margin: 0, fontFamily: 'var(--font-mono)' }}>
+              Metas concluídas ({metasConcluidas.length})
+            </h2>
+            <span style={{ color: 'var(--text-faint)', fontSize: 11 }}>{mostrarConcluidas ? '▲' : '▼'}</span>
+          </button>
+
+          {mostrarConcluidas && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {metasConcluidas.map((m) => (
+                <div
+                  key={m.id}
+                  className="panel"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '13px 16px',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <span style={{ flex: 1, fontSize: 14, color: 'var(--text-dim)' }}>{m.titulo}</span>
+                  <button
+                    className="btn btn-ghost"
+                    style={{ padding: '7px 14px', fontSize: 12 }}
+                    onClick={() => reabrirMeta(m)}
+                  >
+                    Reabrir
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       <section>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
