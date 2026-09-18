@@ -58,6 +58,25 @@ export default function Tasks() {
     setTarefas((prev) => prev.filter((t) => !t.concluida));
   }
 
+  function mover(tarefa, direcao) {
+    const pend = tarefas.filter((t) => !t.concluida).sort((a, b) => a.ordem - b.ordem);
+    const idx = pend.findIndex((t) => t.id === tarefa.id);
+    const novoIdx = idx + direcao;
+    if (novoIdx < 0 || novoIdx >= pend.length) return;
+
+    const reordenados = [...pend];
+    [reordenados[idx], reordenados[novoIdx]] = [reordenados[novoIdx], reordenados[idx]];
+    const ids = reordenados.map((t) => t.id);
+    const novaOrdem = new Map(ids.map((id, i) => [id, i]));
+
+    setTarefas((prev) =>
+      prev
+        .map((t) => (novaOrdem.has(t.id) ? { ...t, ordem: novaOrdem.get(t.id) } : t))
+        .sort((a, b) => a.concluida - b.concluida || a.ordem - b.ordem)
+    );
+    api.reordenarTarefas(ids).catch(() => {});
+  }
+
   function mudarDia(deltaDias) {
     const d = new Date(data + 'T00:00:00');
     d.setDate(d.getDate() + deltaDias);
@@ -108,8 +127,15 @@ export default function Tasks() {
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {pendentes.map((t) => (
-          <TaskItem key={t.id} tarefa={t} onAlternar={alternar} onExcluir={excluir} />
+        {pendentes.map((t, i) => (
+          <TaskItem
+            key={t.id}
+            tarefa={t}
+            onAlternar={alternar}
+            onExcluir={excluir}
+            onSubir={i > 0 ? () => mover(t, -1) : null}
+            onDescer={i < pendentes.length - 1 ? () => mover(t, 1) : null}
+          />
         ))}
       </div>
 
@@ -132,7 +158,8 @@ export default function Tasks() {
   );
 }
 
-function TaskItem({ tarefa, onAlternar, onExcluir }) {
+function TaskItem({ tarefa, onAlternar, onExcluir, onSubir, onDescer }) {
+  const temSetas = onSubir !== undefined;
   return (
     <div
       className="panel"
@@ -144,6 +171,45 @@ function TaskItem({ tarefa, onAlternar, onExcluir }) {
         borderRadius: 'var(--radius-md)',
       }}
     >
+      {temSetas && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
+          <button
+            onClick={onSubir || undefined}
+            disabled={!onSubir}
+            aria-label="Mover para cima"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: onSubir ? 'var(--text-dim)' : 'var(--text-faint)',
+              opacity: onSubir ? 1 : 0.3,
+              cursor: onSubir ? 'pointer' : 'default',
+              fontSize: 12,
+              lineHeight: 1,
+              padding: 2,
+            }}
+          >
+            ▲
+          </button>
+          <button
+            onClick={onDescer || undefined}
+            disabled={!onDescer}
+            aria-label="Mover para baixo"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: onDescer ? 'var(--text-dim)' : 'var(--text-faint)',
+              opacity: onDescer ? 1 : 0.3,
+              cursor: onDescer ? 'pointer' : 'default',
+              fontSize: 12,
+              lineHeight: 1,
+              padding: 2,
+            }}
+          >
+            ▼
+          </button>
+        </div>
+      )}
+
       <button
         onClick={() => onAlternar(tarefa)}
         aria-label={tarefa.concluida ? 'Marcar como pendente' : 'Marcar como concluída'}

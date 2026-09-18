@@ -28,6 +28,17 @@ router.post('/', (req, res) => {
   res.status(201).json(db.prepare('SELECT * FROM tarefas WHERE id = ?').get(info.lastInsertRowid));
 });
 
+// Reordena tarefas: recebe a lista de ids na nova ordem e regrava o campo `ordem`.
+router.post('/reordenar', (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids)) {
+    return res.status(400).json({ erro: 'ids deve ser um array' });
+  }
+  const stmt = db.prepare('UPDATE tarefas SET ordem = ? WHERE id = ?');
+  ids.forEach((id, index) => stmt.run(index, id));
+  res.json({ ok: true });
+});
+
 router.put('/:id', (req, res) => {
   const existente = db.prepare('SELECT * FROM tarefas WHERE id = ?').get(req.params.id);
   if (!existente) return res.status(404).json({ erro: 'Tarefa não encontrada' });

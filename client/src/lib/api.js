@@ -66,4 +66,5 @@ export const api = {
   atualizarTarefa: (id, dados) => req(`/tarefas/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
   excluirTarefa: (id) => req(`/tarefas/${id}`, { method: 'DELETE' }),
   limparConcluidas: (data) => req(`/tarefas${data ? `?data=${data}` : ''}`, { method: 'DELETE' }),
+  reordenarTarefas: (ids) => req('/tarefas/reordenar', { method: 'POST', body: JSON.stringify({ ids }) }),
 };
