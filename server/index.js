@@ -9,15 +9,15 @@ import { existsSync } from 'node:fs';
 import dotenv from 'dotenv';
 import express from 'express';
 
+import app from './app.js';
+import { configurarWebPush } from './services/webpush.js';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const { default: app } = await import('./app.js');
-const { configurarWebPush } = await import('./services/webpush.js');
-
 configurarWebPush();
 
-if (!process.env.VERCEL) {
+async function iniciarLocal() {
   const clientDist = path.join(__dirname, '..', 'client', 'dist');
   if (existsSync(clientDist)) {
     app.use(
@@ -49,5 +49,7 @@ if (!process.env.VERCEL) {
     console.log(`\n  To Win — servidor rodando em http://localhost:${PORT}\n`);
   });
 }
+
+if (!process.env.VERCEL) iniciarLocal();
 
 export default app;

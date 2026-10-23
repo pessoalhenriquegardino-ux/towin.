@@ -1,9 +1,9 @@
-const FUSO = process.env.APP_TIMEZONE || 'America/Sao_Paulo';
+const fuso = () => process.env.APP_TIMEZONE || 'America/Sao_Paulo';
 
 /** Data e hora "de parede" no fuso do usuário (o servidor roda em UTC). */
 export function agoraLocal() {
   const partes = new Intl.DateTimeFormat('en-CA', {
-    timeZone: FUSO,
+    timeZone: fuso(),
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

@@ -39,6 +39,9 @@ api.use('/pomodoro', pomodoroRouter);
 api.use('/tarefas', tarefasRouter);
 
 app.use('/api', api);
+// Na Vercel (serviço separado) o caminho pode chegar com ou sem o prefixo /api:
+// aceitamos os dois. Fora da Vercel isso fica desligado pra não colidir com as rotas do site.
+if (process.env.VERCEL) app.use('/', api);
 
 app.use('/api', (req, res) => res.status(404).json({ erro: 'Rota não encontrada' }));
 
