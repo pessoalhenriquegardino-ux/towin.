@@ -75,4 +75,40 @@ export const api = {
   excluirTarefa: (id) => req(`/tarefas/${id}`, { method: 'DELETE' }),
   limparConcluidas: (data) => req(`/tarefas${data ? `?data=${data}` : ''}`, { method: 'DELETE' }),
   reordenarTarefas: (ids) => req('/tarefas/reordenar', { method: 'POST', body: JSON.stringify({ ids }) }),
+
+  // Finanças
+  fin: {
+    categorias: () => req('/financas/categorias'),
+    criarCategoria: (d) => req('/financas/categorias', { method: 'POST', body: JSON.stringify(d) }),
+    atualizarCategoria: (id, d) => req(`/financas/categorias/${id}`, { method: 'PUT', body: JSON.stringify(d) }),
+    excluirCategoria: (id) => req(`/financas/categorias/${id}`, { method: 'DELETE' }),
+
+    resumo: (mes, perfil) =>
+      req(`/financas/resumo?mes=${mes}${perfil && perfil !== 'todos' ? `&perfil=${perfil}` : ''}`),
+
+    lancamentos: (params) => req(`/financas/lancamentos?${new URLSearchParams(params)}`),
+    criarLancamento: (d) => req('/financas/lancamentos', { method: 'POST', body: JSON.stringify(d) }),
+    atualizarLancamento: (id, d) => req(`/financas/lancamentos/${id}`, { method: 'PUT', body: JSON.stringify(d) }),
+    excluirLancamento: (id, escopo) =>
+      req(`/financas/lancamentos/${id}${escopo ? `?escopo=${escopo}` : ''}`, { method: 'DELETE' }),
+
+    recorrencias: () => req('/financas/recorrencias'),
+    criarRecorrencia: (d) => req('/financas/recorrencias', { method: 'POST', body: JSON.stringify(d) }),
+    atualizarRecorrencia: (id, d) => req(`/financas/recorrencias/${id}`, { method: 'PUT', body: JSON.stringify(d) }),
+    cancelarRecorrencia: (id, data) =>
+      req(`/financas/recorrencias/${id}/cancelar`, { method: 'POST', body: JSON.stringify({ data_cancelamento: data }) }),
+    reativarRecorrencia: (id) => req(`/financas/recorrencias/${id}/reativar`, { method: 'POST' }),
+    excluirRecorrencia: (id) => req(`/financas/recorrencias/${id}`, { method: 'DELETE' }),
+
+    economias: () => req('/financas/economias'),
+    criarEconomia: (d) => req('/financas/economias', { method: 'POST', body: JSON.stringify(d) }),
+    excluirEconomia: (id) => req(`/financas/economias/${id}`, { method: 'DELETE' }),
+
+    urlExportar: (mes, perfil) => {
+      const p = new URLSearchParams();
+      if (mes) p.set('mes', mes);
+      if (perfil && perfil !== 'todos') p.set('perfil', perfil);
+      return `/api/financas/exportar?${p}`;
+    },
+  },
 };

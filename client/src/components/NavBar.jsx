@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 const itens = [
   { to: '/', label: 'Painel', icon: '⌂' },
   { to: '/tarefas', label: 'Tarefas', icon: '☑' },
+  { to: '/financas', label: 'Finanças', icon: '＄' },
   { to: '/pomodoro', label: 'Foco', icon: '◷' },
   { to: '/linha-do-tempo', label: 'Jornada', icon: '⏱' },
   { to: '/coach', label: 'Coach', icon: '✦' },

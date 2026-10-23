@@ -3,6 +3,7 @@ import { escolherAlvoUrgente, montarContextoTexto } from './contexto.js';
 import { gerarNotificacao } from './claude.js';
 import { enviarPushParaTodos } from './webpush.js';
 import { agoraLocal, paraMinutos } from './tempo.js';
+import { avisarVencimentos } from './financas.js';
 
 const TIPOS = ['provocacao', 'pergunta', 'citacao'];
 // Se o cron externo atrasar, ainda dispara o horário até este limite (em minutos).
@@ -85,6 +86,20 @@ export async function processarCicloAgendado() {
     if (reserva.changes === 0) continue;
 
     disparados.push({ slot, ...(await dispararNotificacaoAutomatica()) });
+  }
+
+  // Aviso de contas vencendo: uma vez por dia, a partir do primeiro horário configurado.
+  if (horarios.length && minutos >= Math.min(...horarios.map(paraMinutos)) && !dentroDaJanelaDeSilencio(config, minutos)) {
+    const slot = `vencimentos ${data}`;
+    const reserva = await db.run('INSERT OR IGNORE INTO disparos (slot) VALUES (?)', [slot]);
+    if (reserva.changes > 0) {
+      try {
+        disparados.push({ slot, ...(await avisarVencimentos()) });
+      } catch (err) {
+        console.error('[scheduler] aviso de vencimentos:', err.message);
+        disparados.push({ slot, erro: err.message });
+      }
+    }
   }
 
   return { agora: `${data} ${hhmm}`, horarios, disparados };

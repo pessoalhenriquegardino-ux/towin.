@@ -107,6 +107,61 @@ CREATE TABLE IF NOT EXISTS disparos (
   disparado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS fin_categorias (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome TEXT NOT NULL,
+  tipo TEXT NOT NULL DEFAULT 'despesa',
+  orcamento_mensal REAL,
+  UNIQUE (nome, tipo)
+);
+
+CREATE TABLE IF NOT EXISTS fin_recorrencias (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome TEXT NOT NULL,
+  tipo TEXT NOT NULL DEFAULT 'despesa',
+  perfil TEXT NOT NULL DEFAULT 'pessoal',
+  valor REAL NOT NULL,
+  periodicidade TEXT NOT NULL DEFAULT 'mensal',
+  dia_cobranca INTEGER NOT NULL DEFAULT 1,
+  categoria_id INTEGER,
+  data_inicio TEXT NOT NULL,
+  ativa INTEGER NOT NULL DEFAULT 1,
+  data_cancelamento TEXT,
+  observacao TEXT,
+  data_criacao TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS fin_lancamentos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  perfil TEXT NOT NULL DEFAULT 'pessoal',
+  tipo TEXT NOT NULL DEFAULT 'despesa',
+  descricao TEXT NOT NULL,
+  valor REAL NOT NULL,
+  categoria_id INTEGER,
+  data_vencimento TEXT NOT NULL,
+  data_pagamento TEXT,
+  forma_pagamento TEXT,
+  observacao TEXT,
+  recorrencia_id INTEGER,
+  competencia TEXT,
+  grupo TEXT,
+  parcela_num INTEGER,
+  parcela_total INTEGER,
+  data_criacao TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS ix_fin_lanc_venc ON fin_lancamentos (data_vencimento);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_fin_rec_comp ON fin_lancamentos (recorrencia_id, competencia) WHERE recorrencia_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS fin_economias (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  descricao TEXT NOT NULL,
+  valor REAL NOT NULL,
+  data TEXT NOT NULL,
+  perfil TEXT NOT NULL DEFAULT 'pessoal',
+  data_criacao TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 INSERT OR IGNORE INTO configuracao (id) VALUES (1);
 `;
 

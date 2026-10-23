@@ -12,6 +12,7 @@ import Chat from './components/Chat.jsx';
 import Settings from './components/Settings.jsx';
 import Pomodoro from './components/Pomodoro.jsx';
 import Tasks from './components/Tasks.jsx';
+import Finance from './components/Finance.jsx';
 
 export default function App() {
   // 'carregando' | 'login' | 'ok'
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/linha-do-tempo" element={<Timeline />} />
           <Route path="/pomodoro" element={<Pomodoro />} />
           <Route path="/tarefas" element={<Tasks />} />
+          <Route path="/financas" element={<Finance />} />
           <Route path="/coach" element={<Chat />} />
           <Route path="/config" element={<Settings onSair={() => setSessao('login')} />} />
         </Routes>

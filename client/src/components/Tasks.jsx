@@ -94,8 +94,8 @@ export default function Tasks() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
         <button className="btn btn-ghost" style={{ padding: '8px 14px' }} onClick={() => mudarDia(-1)}>←</button>
-        <div className="pill pill-accent" style={{ textTransform: 'capitalize', flex: 1, justifyContent: 'center' }}>
-          {formatarDataLabel(data)}
+        <div className="pill pill-accent" style={{ textTransform: 'none', flex: 1, justifyContent: 'center' }}>
+          {formatarDataLabel(data).replace(/^./, (c) => c.toUpperCase())}
         </div>
         <button className="btn btn-ghost" style={{ padding: '8px 14px' }} onClick={() => mudarDia(1)}>→</button>
         {data !== hojeISO() && (

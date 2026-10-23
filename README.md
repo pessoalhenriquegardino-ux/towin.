@@ -12,6 +12,13 @@ ToWin/
   .github/workflows/notificacoes.yml → "acorda" o app a cada 30min pra disparar as notificações
 ```
 
+## Finanças
+
+Aba **Finanças**: lançamentos de receitas e despesas (Pessoal / Empresa) com vencimento, status e parcelamento;
+assinaturas e contas fixas que geram os lançamentos do mês sozinhas (e calculam a economia ao cancelar);
+orçamento por categoria; resumo do mês com gráfico; exportação em CSV (Excel / Google Planilhas);
+e um aviso diário por notificação quando há contas vencendo.
+
 ## Rodar localmente
 
 ```bash

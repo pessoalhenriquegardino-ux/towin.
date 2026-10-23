@@ -15,6 +15,7 @@ import configuracaoRouter from './routes/configuracao.js';
 import dashboardRouter from './routes/dashboard.js';
 import pomodoroRouter from './routes/pomodoro.js';
 import tarefasRouter from './routes/tarefas.js';
+import financasRouter from './routes/financas/index.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -37,6 +38,7 @@ api.use('/configuracao', configuracaoRouter);
 api.use('/dashboard', dashboardRouter);
 api.use('/pomodoro', pomodoroRouter);
 api.use('/tarefas', tarefasRouter);
+api.use('/financas', financasRouter);
 
 app.use('/api', api);
 // Na Vercel (serviço separado) o caminho pode chegar com ou sem o prefixo /api:
