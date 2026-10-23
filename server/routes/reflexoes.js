@@ -1,22 +1,23 @@
 import { Router } from 'express';
 import db from '../db.js';
+import { ah } from '../middleware/async.js';
 
 const router = Router();
 
-router.get('/', (req, res) => {
-  const rows = db.prepare('SELECT * FROM reflexoes ORDER BY data DESC').all();
-  res.json(rows);
-});
+router.get('/', ah(async (req, res) => {
+  res.json(await db.all('SELECT * FROM reflexoes ORDER BY data DESC'));
+}));
 
-router.post('/', (req, res) => {
+router.post('/', ah(async (req, res) => {
   const { texto, meta_id, vicio_id, papel } = req.body;
   if (!texto) return res.status(400).json({ erro: 'texto é obrigatório' });
 
-  const info = db
-    .prepare('INSERT INTO reflexoes (texto, papel, meta_id, vicio_id) VALUES (?, ?, ?, ?)')
-    .run(texto, papel || 'usuario', meta_id || null, vicio_id || null);
+  const info = await db.run(
+    'INSERT INTO reflexoes (texto, papel, meta_id, vicio_id) VALUES (?, ?, ?, ?)',
+    [texto, papel || 'usuario', meta_id || null, vicio_id || null]
+  );
 
-  res.status(201).json(db.prepare('SELECT * FROM reflexoes WHERE id = ?').get(info.lastInsertRowid));
-});
+  res.status(201).json(await db.get('SELECT * FROM reflexoes WHERE id = ?', [info.lastInsertRowid]));
+}));
 
 export default router;

@@ -1,90 +1,70 @@
 # To Win
 
-App pessoal (uso individual) de metas, sobriedade e propósito. PWA em tema preto/dourado,
-com um "Coach" movido a IA (Claude) que confronta em vez de animar.
+App pessoal (uso individual) de metas, sobriedade, tarefas e foco, com um "Coach" movido a IA (Claude)
+que confronta em vez de animar. PWA em preto e branco, pensado primeiro pro celular.
 
 ## Estrutura
 
 ```
 ToWin/
-  server/   → API Node/Express + banco SQLite (node:sqlite, sem dependências nativas) + Web Push + Claude
-  client/   → PWA React + Vite (tema preto)
+  client/   → PWA React + Vite
+  server/   → API Express + banco (SQLite local / Turso em produção) + Web Push + Claude
+  .github/workflows/notificacoes.yml → "acorda" o app a cada 30min pra disparar as notificações
 ```
 
-## 1. Configurar o servidor
+## Rodar localmente
 
 ```bash
-cd ToWin/server
-npm install          # já rodado
-npm run generate-vapid   # já rodado — chaves estão em .env
+cd server && npm install && cp .env.example .env   # preencha o que quiser
+npm run dev                                         # http://localhost:8787
 ```
-
-Abra `ToWin/server/.env` e preencha:
-
-```
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-Sem essa chave, o app funciona (CRUD de metas/vícios, contador, timeline), mas o Coach
-(chat, notificações geradas por IA, frase do dia) não vai responder.
-
-Rodar o servidor:
 
 ```bash
-npm run dev
+cd client && npm install && npm run dev             # http://localhost:5173 (proxy de /api)
 ```
 
-Sobe em `http://localhost:8787`.
+Sem `TURSO_DATABASE_URL` o app usa o arquivo `server/data/towin.sqlite`.
+Sem `APP_PASSWORD` não há login (ok só no seu computador).
 
-## 2. Rodar o cliente
+## Publicar de graça: Vercel + Turso + GitHub Actions
 
-```bash
-cd ToWin/client
-npm install    # já rodado
-npm run dev
-```
+Custo: R$ 0. (O Coach de IA usa a API da Anthropic, que é cobrada à parte por uso.)
 
-Sobe em `http://localhost:5173`, já com proxy de `/api` para o servidor.
+### 1. Turso (banco de dados)
+1. Crie conta em turso.tech (entre com o GitHub) e crie um banco (região `aws-us-east-1`).
+2. Copie a **URL** (`libsql://...`) e gere um **token** de acesso.
 
-## 3. Testar Web Push
+### 2. Vercel (site + API)
+1. Importe o repositório do GitHub em vercel.com/new.
+2. Em **Environment Variables**, adicione:
 
-1. Abra o app no navegador (Chrome/Edge — em `localhost` o HTTPS não é exigido).
-2. Vá em **Ajustes** → **Ativar notificações** → aceite a permissão do navegador.
-3. Clique em **Enviar notificação de teste** — dispara uma notificação real via Web Push,
-   gerada pelo Claude a partir da sua meta/vício mais urgente no momento.
-4. Pode fechar a aba: o Service Worker recebe o push mesmo assim.
+| Variável | Valor |
+|---|---|
+| `TURSO_DATABASE_URL` | URL do banco (passo 1) |
+| `TURSO_AUTH_TOKEN` | token do banco (passo 1) |
+| `APP_PASSWORD` | a senha que você vai digitar pra entrar no app |
+| `SESSION_SECRET` | um texto aleatório longo |
+| `CRON_SECRET` | outro texto aleatório longo |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | `npm run generate-vapid` (dentro de `server/`) |
+| `VAPID_SUBJECT` | `mailto:seu-email` |
+| `ANTHROPIC_API_KEY` | chave da Anthropic (precisa de crédito pro Coach funcionar) |
 
-O agendador automático (`server/services/scheduler.js`) roda a cada 30 minutos e dispara
-notificações reais nos horários configurados em Ajustes, respeitando a janela de silêncio.
+3. Faça o deploy.
 
-## 4. Build de produção do PWA
+### 3. GitHub Actions (notificações nos horários)
+No repositório: **Settings → Secrets and variables → Actions → New repository secret**:
+- `APP_URL` → endereço do app na Vercel, sem barra no final (ex: `https://towin.vercel.app`)
+- `CRON_SECRET` → o mesmo valor configurado na Vercel
 
-```bash
-cd ToWin/client
-npm run build
-npm run preview   # serve o build em localhost para testar "instalar app"
-```
+O workflow roda a cada 30 minutos; o app só envia no horário que você configurou em **Ajustes**,
+no máximo uma vez por horário por dia. Observação: o GitHub pausa workflows agendados de repositórios
+públicos sem nenhum commit por 60 dias — se as notificações pararem, abra a aba Actions e reative.
 
-Para instalar de verdade no celular como PWA (ícone na tela, push com app fechado),
-o site precisa estar em HTTPS público — pode publicar `client/dist` em qualquer host
-estático (Vercel, Netlify, etc.) apontando as chamadas `/api` para o `server` publicado
-(Railway, Fly.io, um VPS, etc.). Nenhuma mudança de código é necessária além da URL da API.
+### 4. Instalar no celular
+Abra o endereço no navegador do celular → "Adicionar à tela inicial". As notificações push precisam ser
+ativadas em **Ajustes → Ativar notificações** (uma vez por aparelho).
 
-## O que já funciona (MVP completo, passos 1–8 do plano original)
-
-1. ✅ Setup PWA (manifest, service worker, ícones)
-2. ✅ Modelo de dados completo em SQLite (metas, vícios, recaídas, marcos, notificações,
-   reflexões, configuração)
-3. ✅ CRUD de Metas e Vícios (com foto em base64, "porquê" obrigatório)
-4. ✅ Painel principal com contador de sobriedade em tempo real (JS puro, 1x/segundo)
-5. ✅ Integração com Claude para gerar notificações e a "frase do dia"
-6. ✅ Web Push funcional (VAPID configurado, funciona com navegador fechado)
-7. ✅ Chat com o Coach usando o system prompt de confronto construtivo
-8. ✅ Linha do tempo / histórico de evolução
-
-## Próximos ajustes possíveis (não bloqueantes)
-
-- Trocar SQLite por Postgres/Supabase se quiser acessar de vários dispositivos.
-- Adicionar autenticação simples se for expor o servidor publicamente (hoje é single-user,
-  sem login, como pedido).
-- Melhorar os ícones do manifest (hoje são gerados programaticamente, bem simples).
+## Segurança
+- O app é protegido por uma senha única (`APP_PASSWORD`). Sem ela, qualquer pessoa com o endereço veria seus dados
+  e poderia gastar seus créditos da Anthropic.
+- Nunca commite o arquivo `.env`.

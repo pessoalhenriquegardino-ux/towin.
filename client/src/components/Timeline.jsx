@@ -7,7 +7,9 @@ const ICONES = {
   reflexao: '✎',
 };
 
-function formatarData(iso) {
+// O banco grava 'YYYY-MM-DD HH:MM:SS' em UTC (sem fuso): sem o 'Z' o navegador leria como horário local.
+function formatarData(texto) {
+  const iso = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(texto) ? texto.replace(' ', 'T') + 'Z' : texto;
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 

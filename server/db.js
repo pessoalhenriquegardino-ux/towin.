@@ -1,18 +1,10 @@
-import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdirSync } from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.join(__dirname, 'data');
-mkdirSync(dataDir, { recursive: true });
-const dbPath = path.join(dataDir, 'towin.sqlite');
 
-export const db = new DatabaseSync(dbPath);
-db.exec('PRAGMA journal_mode = WAL');
-db.exec('PRAGMA foreign_keys = ON');
-
-db.exec(`
+const SCHEMA = `
 CREATE TABLE IF NOT EXISTS metas (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   titulo TEXT NOT NULL,
@@ -24,7 +16,12 @@ CREATE TABLE IF NOT EXISTS metas (
   categoria TEXT,
   status TEXT NOT NULL DEFAULT 'ativa',
   progresso INTEGER NOT NULL DEFAULT 0,
-  ultima_atualizacao TEXT NOT NULL DEFAULT (datetime('now'))
+  ultima_atualizacao TEXT NOT NULL DEFAULT (datetime('now')),
+  valor_alvo REAL,
+  valor_atual REAL,
+  foto_pos_x REAL DEFAULT 50,
+  foto_pos_y REAL DEFAULT 50,
+  foto_zoom REAL DEFAULT 100
 );
 
 CREATE TABLE IF NOT EXISTS vicios (
@@ -105,22 +102,98 @@ CREATE TABLE IF NOT EXISTS tarefas (
   concluida_em TEXT
 );
 
-INSERT OR IGNORE INTO configuracao (id) VALUES (1);
-`);
+CREATE TABLE IF NOT EXISTS disparos (
+  slot TEXT PRIMARY KEY,
+  disparado_em TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
-// Migração leve: adiciona colunas novas em bancos já existentes, sem apagar dados.
-function garantirColuna(tabela, coluna, definicao) {
-  const colunas = db.prepare(`PRAGMA table_info(${tabela})`).all();
-  const existe = colunas.some((c) => c.name === coluna);
-  if (!existe) {
-    db.exec(`ALTER TABLE ${tabela} ADD COLUMN ${coluna} ${definicao}`);
+INSERT OR IGNORE INTO configuracao (id) VALUES (1);
+`;
+
+// Colunas adicionadas depois da v1 — só necessárias em bancos locais antigos.
+const COLUNAS_LEGADAS = [
+  ['metas', 'valor_alvo', 'REAL'],
+  ['metas', 'valor_atual', 'REAL'],
+  ['metas', 'foto_pos_x', 'REAL DEFAULT 50'],
+  ['metas', 'foto_pos_y', 'REAL DEFAULT 50'],
+  ['metas', 'foto_zoom', 'REAL DEFAULT 100'],
+];
+
+let client;
+let pronto;
+
+async function criarCliente() {
+  const url = process.env.TURSO_DATABASE_URL;
+  if (url) {
+    // Produção (Vercel): Turso via HTTP, cliente puro JS (sem binário nativo).
+    const { createClient } = await import('@libsql/client/web');
+    return { c: createClient({ url, authToken: process.env.TURSO_AUTH_TOKEN }), local: false };
+  }
+  // Desenvolvimento local: arquivo SQLite em server/data.
+  const { createClient } = await import('@libsql/client');
+  const dataDir = path.join(__dirname, 'data');
+  mkdirSync(dataDir, { recursive: true });
+  const relativo = path.relative(process.cwd(), path.join(dataDir, 'towin.sqlite')).replace(/\\/g, '/');
+  return { c: createClient({ url: `file:${relativo}` }), local: true };
+}
+
+async function iniciar() {
+  const { c, local } = await criarCliente();
+  client = c;
+  if (local) await client.execute('PRAGMA foreign_keys = ON');
+  await client.executeMultiple(SCHEMA);
+  if (local) {
+    for (const [tabela, coluna, definicao] of COLUNAS_LEGADAS) {
+      const cols = await client.execute(`PRAGMA table_info(${tabela})`);
+      if (!cols.rows.some((r) => r.name === coluna)) {
+        await client.execute(`ALTER TABLE ${tabela} ADD COLUMN ${coluna} ${definicao}`);
+      }
+    }
   }
 }
 
-garantirColuna('metas', 'valor_alvo', 'REAL');
-garantirColuna('metas', 'valor_atual', 'REAL');
-garantirColuna('metas', 'foto_pos_x', 'REAL DEFAULT 50');
-garantirColuna('metas', 'foto_pos_y', 'REAL DEFAULT 50');
-garantirColuna('metas', 'foto_zoom', 'REAL DEFAULT 100');
+function garantirPronto() {
+  if (!pronto) {
+    pronto = iniciar().catch((err) => {
+      pronto = undefined; // permite tentar de novo na próxima requisição
+      throw err;
+    });
+  }
+  return pronto;
+}
+
+function limpar(args) {
+  return args.map((a) => (a === undefined ? null : a));
+}
+
+function linhas(resultado) {
+  return resultado.rows.map((row) =>
+    Object.fromEntries(resultado.columns.map((coluna, i) => [coluna, row[i]]))
+  );
+}
+
+export const db = {
+  async all(sql, args = []) {
+    await garantirPronto();
+    return linhas(await client.execute({ sql, args: limpar(args) }));
+  },
+  async get(sql, args = []) {
+    const rows = await db.all(sql, args);
+    return rows[0];
+  },
+  async run(sql, args = []) {
+    await garantirPronto();
+    const r = await client.execute({ sql, args: limpar(args) });
+    return { lastInsertRowid: Number(r.lastInsertRowid ?? 0), changes: r.rowsAffected };
+  },
+  // Várias escritas numa única ida ao banco (importante com Turso remoto).
+  async batch(statements) {
+    await garantirPronto();
+    return client.batch(
+      statements.map(([sql, args = []]) => ({ sql, args: limpar(args) })),
+      'write'
+    );
+  },
+};
 
 export default db;

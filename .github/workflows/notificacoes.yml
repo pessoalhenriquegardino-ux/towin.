@@ -1,0 +1,18 @@
+name: Notificações agendadas
+
+# A Vercel não mantém um processo ligado, então este workflow "acorda" o app a cada
+# 30 minutos. O próprio app decide se algum horário configurado (Ajustes) já chegou.
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  disparar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar o cron do To Win
+        run: |
+          curl --fail --silent --show-error --max-time 90 \
+            -X POST "${{ secrets.APP_URL }}/api/cron/notificar" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

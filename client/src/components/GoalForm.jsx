@@ -5,12 +5,31 @@ import PhotoPositioner from './PhotoPositioner.jsx';
 
 const CATEGORIAS = ['carreira', 'saúde', 'fé', 'família', 'financeiro', 'pessoal', 'outro'];
 
+const LADO_MAXIMO = 1280;
+
+// Reduz a foto no próprio aparelho antes de enviar: fica leve (~100–300KB) e cabe
+// com folga no limite de envio do servidor, sem perder qualidade visível no card.
 function arquivoParaBase64(file) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const escala = Math.min(1, LADO_MAXIMO / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * escala);
+      canvas.height = Math.round(img.height * escala);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Não foi possível ler a imagem.'));
+    };
+    img.src = url;
   });
 }
 
@@ -55,11 +74,16 @@ export default function GoalForm() {
   async function handleFoto(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const base64 = await arquivoParaBase64(file);
-    setFotoUrl(base64);
-    setFotoPosX(50);
-    setFotoPosY(50);
-    setFotoZoom(100);
+    try {
+      const base64 = await arquivoParaBase64(file);
+      setFotoUrl(base64);
+      setFotoPosX(50);
+      setFotoPosY(50);
+      setFotoZoom(100);
+      setErro('');
+    } catch (err) {
+      setErro(err.message);
+    }
   }
 
   async function handleSubmit(e) {

@@ -1,11 +1,12 @@
 import { Router } from 'express';
+import { ah } from '../middleware/async.js';
 import { escolherAlvoUrgente, montarContextoTexto } from '../services/contexto.js';
 import { gerarNotificacao } from '../services/claude.js';
 
 const router = Router();
 
-router.get('/frase-do-dia', async (req, res) => {
-  const alvo = escolherAlvoUrgente();
+router.get('/frase-do-dia', ah(async (req, res) => {
+  const alvo = await escolherAlvoUrgente();
   if (!alvo) {
     return res.json({ frase: 'Cadastre sua primeira meta ou vício para começar sua caminhada.' });
   }
@@ -18,6 +19,6 @@ router.get('/frase-do-dia', async (req, res) => {
     console.error('[dashboard] erro ao gerar frase do dia:', err.message);
     res.json({ frase: 'O caminho continua. Um passo de cada vez.' });
   }
-});
+}));
 
 export default router;

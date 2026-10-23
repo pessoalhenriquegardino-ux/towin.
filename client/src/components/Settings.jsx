@@ -2,16 +2,23 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
 import { ativarNotificacoesPush, statusPermissaoNotificacao } from '../lib/push.js';
 
-export default function Settings() {
+export default function Settings({ onSair }) {
   const [config, setConfig] = useState(null);
   const [statusPush, setStatusPush] = useState('default');
   const [mensagem, setMensagem] = useState('');
   const [salvando, setSalvando] = useState(false);
+  const [protegido, setProtegido] = useState(false);
 
   useEffect(() => {
     api.obterConfiguracao().then(setConfig);
     statusPermissaoNotificacao().then(setStatusPush);
+    api.statusAuth().then((s) => setProtegido(s.protegido)).catch(() => {});
   }, []);
+
+  async function sair() {
+    await api.logout();
+    onSair?.();
+  }
 
   if (!config) return <div className="page">Carregando...</div>;
 
@@ -129,6 +136,12 @@ export default function Settings() {
       <button className="btn btn-solid" onClick={salvar} disabled={salvando}>
         {salvando ? 'Salvando...' : 'Salvar configurações'}
       </button>
+
+      {protegido && (
+        <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+          <button className="btn btn-ghost" onClick={sair}>Sair deste aparelho</button>
+        </div>
+      )}
     </div>
   );
 }

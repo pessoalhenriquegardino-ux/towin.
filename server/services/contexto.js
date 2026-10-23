@@ -1,18 +1,22 @@
 import db from '../db.js';
+import { lerDataBanco } from './tempo.js';
 
-function diasEntre(dataIso) {
-  const ms = Date.now() - new Date(dataIso).getTime();
-  return ms / (1000 * 60 * 60 * 24);
+const MS_DIA = 1000 * 60 * 60 * 24;
+
+function diasEntre(dataTexto) {
+  return (Date.now() - lerDataBanco(dataTexto).getTime()) / MS_DIA;
 }
 
 /**
  * Escolhe o alvo mais "urgente" agora: meta parada há mais tempo ou perto do prazo,
  * ou vício batendo um marco hoje, ou vício em geral (mantém a chama acesa).
- * Retorna { tipo: 'meta'|'vicio', item, motivoEscolha }
+ * Retorna { tipo: 'meta'|'vicio', item, ... } ou null.
  */
-export function escolherAlvoUrgente() {
-  const metas = db.prepare(`SELECT * FROM metas WHERE status = 'ativa'`).all();
-  const vicios = db.prepare(`SELECT * FROM vicios WHERE status = 'ativo'`).all();
+export async function escolherAlvoUrgente() {
+  const [metas, vicios] = await Promise.all([
+    db.all(`SELECT * FROM metas WHERE status = 'ativa'`),
+    db.all(`SELECT * FROM vicios WHERE status = 'ativo'`),
+  ]);
 
   const candidatos = [];
 
@@ -20,11 +24,11 @@ export function escolherAlvoUrgente() {
     const diasParado = diasEntre(m.ultima_atualizacao);
     let diasParaPrazo = Infinity;
     if (m.prazo) {
-      diasParaPrazo = (new Date(m.prazo).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+      diasParaPrazo = (new Date(m.prazo).getTime() - Date.now()) / MS_DIA;
     }
     // Score: mais parado e mais perto do prazo = mais urgente
     let score = diasParado * 2;
-    if (diasParaPrazo < 30 && diasParaPrazo > 0) score += (30 - diasParaPrazo);
+    if (diasParaPrazo < 30 && diasParaPrazo > 0) score += 30 - diasParaPrazo;
     if (diasParaPrazo <= 0) score += 50; // prazo estourado
     candidatos.push({ tipo: 'meta', item: m, score, diasParado, diasParaPrazo });
   }
@@ -33,7 +37,7 @@ export function escolherAlvoUrgente() {
     const marcosAlvo = JSON.parse(v.marcos_alvo || '[]');
     const diasLimpo = Math.floor(diasEntre(v.data_inicio_sobriedade));
     const bateuMarcoHoje = marcosAlvo.includes(diasLimpo);
-    let score = bateuMarcoHoje ? 100 : 10; // marco tem prioridade máxima
+    const score = bateuMarcoHoje ? 100 : 10; // marco tem prioridade máxima
     candidatos.push({ tipo: 'vicio', item: v, score, diasLimpo, bateuMarcoHoje });
   }
 
@@ -62,9 +66,11 @@ Dias limpo atualmente: ${alvo.diasLimpo}
 ${alvo.bateuMarcoHoje ? `HOJE é um marco: ${alvo.diasLimpo} dias! Celebre isso.` : ''}`;
 }
 
-export function montarContextoGeralParaChat() {
-  const metas = db.prepare(`SELECT * FROM metas WHERE status = 'ativa'`).all();
-  const vicios = db.prepare(`SELECT * FROM vicios WHERE status = 'ativo'`).all();
+export async function montarContextoGeralParaChat() {
+  const [metas, vicios] = await Promise.all([
+    db.all(`SELECT * FROM metas WHERE status = 'ativa'`),
+    db.all(`SELECT * FROM vicios WHERE status = 'ativo'`),
+  ]);
 
   const linhasMetas = metas.map((m) => {
     const diasParado = Math.floor(diasEntre(m.ultima_atualizacao));

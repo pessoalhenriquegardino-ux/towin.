@@ -11,6 +11,9 @@ async function req(path, options = {}) {
       const body = await resp.json();
       erro = body.erro || erro;
     } catch {}
+    if (resp.status === 401 && erro === 'nao_autenticado') {
+      window.dispatchEvent(new Event('towin:nao-autenticado'));
+    }
     throw new Error(erro);
   }
   if (resp.status === 204) return null;
@@ -18,6 +21,11 @@ async function req(path, options = {}) {
 }
 
 export const api = {
+  // Autenticação (senha única)
+  statusAuth: () => req('/auth/status'),
+  login: (senha) => req('/auth/login', { method: 'POST', body: JSON.stringify({ senha }) }),
+  logout: () => req('/auth/logout', { method: 'POST' }),
+
   // Metas
   listarMetas: (status) => req(`/metas${status ? `?status=${status}` : ''}`),
   obterMeta: (id) => req(`/metas/${id}`),

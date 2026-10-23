@@ -1,6 +1,15 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+let cliente;
+// Criado sob demanda: se a chave não estiver configurada, só o Coach falha — o resto do app segue.
+const anthropic = {
+  messages: {
+    create: (...args) => {
+      cliente ??= new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      return cliente.messages.create(...args);
+    },
+  },
+};
 
 export const MODEL = 'claude-sonnet-5';
 
